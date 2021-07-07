@@ -1,7 +1,7 @@
 # digital readout of a photon counting chip
 The photon counting chip became only possible through the availability and maturity of certain technologies and experience gained in high energy physics experiments and related fields. 
 
-#Reference
+# Reference
 
 [1]. MediPix2
 
