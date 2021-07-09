@@ -1,6 +1,6 @@
 /*************************************************************************
  > Copyright (C) 2021 Sangfor Ltd. All rights reserved.
- > File Name   : sensor.sv
+ > File Name   : sensor.svh
  > Author      : bhyou
  > Mail        : bhyou@foxmail.com 
  > Created Time: Wed 07 Jul 2021 07:15:52 PM CST
@@ -17,16 +17,19 @@
 // 3. the intersecting area of the two circle( it is principle 1 and 2) is regarded as the value of 
 //     charge or energy actually collected.
 //----------------------------------------------------------------
+ `include "photon.sv"
+
 class sensor;
    mailbox  mbx;
    int      localCoorX;
    int      localCoorY;
-   event    drvDone;
+   event    sensorDone;
    real     pi = 3.1415926;
 
-   function new(int coorX, coorY);
+   function new(int coorX, coorY, mailbox mbx);
       this.localCoorX = coorX;
       this.localCoorY = coorY;
+      this.mbx        = mbx;
    endfunction 
 
    task automatic get_collected_energy(output real result);
@@ -49,7 +52,7 @@ class sensor;
       hitCoorY  = drvTrns.addrY;
       hitEnergy = drvTrns.energy;
       
-      radiusCC = 25;
+      radiusCC = `CollectRadius;
       radiusED = get_deposition_radius(hitEnergy); 
       hit2pixDist = $hypot((hitCoorX-localCoorX),(hitCoorY-localCoorY));
 
@@ -73,16 +76,28 @@ class sensor;
          result = 0;
       end
 
+      if(`DEBUG_MEDIUM) begin
+         $display("@%0t the distance from hit position to current pixel is %f", $time, hit2pixDist);
+         $display("@%0t the radius of energy deposition is %f", $time, radiusED);
+         $display("@%0t the angle of colected energy is %f", $time, angleCC);
+         $display("@%0t the angle of deposition energy is %f", $time, angleED);
+         $display("@%0t the area of colected energy is %f", $time, fanAreaCC);
+         $display("@%0t the area of deposition energy is %f", $time, fanAreaED);
+         $display("@%0t the area of Quadrilateral is %f", $time, quadArea);
+         $display("@%0t collected energy is %f", $time, result);
+         $display("-------------------------------------------------\n");
+      end
    endtask
 
-   task automatic convert_energy_to_voltage(real energy, output real voltage);
+   task automatic convert_energy_to_voltage(output real voltage);
+      real   energy;
       get_collected_energy(energy);
       voltage = (energy / (pi * $pow(`CollectRadius, 2))) * 100;
-      -> drvDone;
+      -> sensorDone;
    endtask
 
    function real get_deposition_radius(input int energy);
-      if(energy<=500)  return energy/10;
+      if(energy<=250)  return energy/5;
       else             return 50;
    endfunction
 
@@ -103,3 +118,28 @@ class sensor;
    endfunction
 
 endclass 
+`ifdef testingSensor
+program testcase();
+   generator  Gen;
+   sensor     sensor;
+   mailbox    mbx;
+   event      done;
+   real       energy;
+
+   initial begin
+      mbx     = new();
+      Gen     = new(mbx);
+      sensor     = new(25,25);
+      sensor.mbx = mbx;
+      Gen.drvDone = done;
+      sensor.sensorDone = done;
+      Gen.hitsNumber = 5;
+      fork
+         Gen.genData(); 
+         forever sensor.get_collected_energy(energy);         
+      join_any
+   end
+
+endprogram
+
+`endif
