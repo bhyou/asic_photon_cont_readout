@@ -10,15 +10,15 @@
 //  function:
 //   describe particle hit response, such as collect energy, 
 //   shaper (convert collected energy to voltage), compator (over
-//  -threshold comparetor), then output a pulse to digital front-end 
-// of pixel cell
+//   -threshold comparetor), then output a pulse to digital front-end 
+//   of pixel cell
 //--------------------------------------------------------------
-`include "discriminator.svh"
-`include "sensor.svh"
+`include "discriminator.sv"
+`include "sensor.sv"
 
 `ifdef testingAnalogFrontend
     `include "defines.sv"
-    `include "generator.svh"
+    `include "generator.sv"
 `endif
 
 class analog_front_end;
@@ -31,13 +31,13 @@ class analog_front_end;
         disc = new(sensorInf);
     endfunction //new()
 
-    task automatic hit_reaction(real voltageS, voltageE, voltageSE);
-        real localVoltage;
+    task automatic hit_reaction(real voltageS, voltageE, voltageSE, ref real localVoltage);
         sensor.convert_energy_to_voltage(localVoltage);
         fork
             disc.local_compare(localVoltage);
             disc.summing_compare(localVoltage,voltageS, voltageE,voltageSE);
         join
+
     endtask // 
 
 endclass //analog_front_end
@@ -47,6 +47,7 @@ module testcase;
     reg    clock;
     wire   discOutLocal;
     wire   discOutSum;
+    real   localVoltage;
 
     mailbox           mbx;
     generator         Gen;
@@ -72,7 +73,7 @@ module testcase;
 
         fork
             Gen.genData();
-            aFE.hit_reaction(20,10,30);
+            aFE.hit_reaction(20,10,30,localVoltage);
         join
         $stop;
     end
