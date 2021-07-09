@@ -38,7 +38,7 @@ arbiter_logic  inst_arbiter(
    .winerAll         ( hitPulse        )
 );
 
-lsfr_cnt    Cnter0(
+lsfr_cnt    LoclaCnter(
    .shutter  (shutterA) ,
    .clk_read (clk_read) ,
    .reset    (reset   ) ,
@@ -55,7 +55,7 @@ syncronization inst_sync(
    .sumPulse            ( sumPulse       ) 
 );
 
-lsfr_cnt    Cnter1(
+lsfr_cnt    SumminngCnter(
    .shutter  (shutterB) ,
    .clk_read (clk_read) ,
    .reset    (reset   ) ,
