@@ -10,9 +10,17 @@ class photon;
    rand bit [7:0]     addrX;
    rand bit [7:0]     addrY;
    rand bit [7:0]     energy;
-        bit [7:0]     radius;
    
    function print();
       $display("@%0t a photon with energy of %d hits (%d, %d)", $time, this.energy, this.addrX, this.addrY);
+   endfunction
+
+   function photon copy();
+       photon  trns;
+       trns = new();
+       trns.addrX = this.addrX;
+       trns.addrY = this.addrY;
+       trns.energy= this.energy;
+       return trns;
    endfunction
 endclass
