@@ -8,7 +8,7 @@
 .PHONY:clean file com mixed sim 
 clean:
 	@rm -fr simv* csrc* ucli* 64 AN* DVE* *.vpd  *.log
-
+	@rm -fr .restart* .synopsys*
 
 #The following compile option is used for coverage.
 coverOpt += -cm line+cond+tgl+fsm+branch+assert
@@ -27,7 +27,7 @@ else
 endif
 
 macroOpt += +define+DEBUG_MEDIUM=1
-#macroOpt += +incdir+../rtl/include
+macroOpt += +incdir+../model+../bench
 
 top ?= top_tb
 simOpt += -l tb_sim.log 
