@@ -13,11 +13,9 @@ module digit_front_end(
 
    input  wire          discOutLocal    ,
    input  wire   [3:0]  ackFromNeighbour,
-   output wire          hitPulse        ,
 
    input  wire          discOutSumLocal    ,
    input  wire   [2:0]  discOutSumNeighbour,
-   output wire          sumPulse           ,
 
    input  wire          clk_read ,
    input  wire          reset    ,
@@ -29,6 +27,7 @@ module digit_front_end(
    output wire          SerOutB 
 );
 
+wire   hitPulse;
 arbiter_logic  inst_arbiter(
    .arbiterEnable    ( SummingMode     ),
    .discOutLocal     ( discOutLocal    ),
@@ -47,6 +46,7 @@ lsfr_cnt    LoclaCnter(
    .SerOut   (SerOutA)
 );
 
+wire   sumPulse;
 syncronization inst_sync(
    .discOutSumLocal     ( discOutSumLocal     ),
    .discOutSumNeighbour ( discOutSumNeighbour ),

@@ -7,28 +7,13 @@
  ************************************************************************/
 `include "analog_front_end.sv"
 
-module pixelCell(
+module pixelcell(
     output real          collectEnergyL,
     input  real          collectEnergyS,
     input  real          collectEnergyE,
     input  real          collectEnergySE,
-    output wire          discOutLocal  ,
-
-    input  wire          SummingMode   ,
-    input  wire   [3:0]  discOutNear   ,
-    output wire   [3:0]  ackToNear     ,
-    input  wire   [3:0]  ackFromNear   ,
-
-    output wire          discOutSumLocal,
-    input  wire   [2:0]  discOutSumNear,
-    input  wire          refclk  ,
-    input  wire          clk_read ,
-    input  wire          reset    ,
-    input  wire          shutter  ,
-    input  wire          SerInA   ,
-    input  wire          SerInB   ,
-    output wire          SerOutA  ,
-    output wire          SerOutB  ,
+    input  wire          refclk        ,
+    pixelcell_inf.dut    pixCellInf    
 );
     parameter CoorX = 25;
     parameter CoorY = 25;
@@ -45,25 +30,97 @@ module pixelCell(
         end
     end
 
-    assign discOutLocal    = sensorInf.discOutLocal;
-    assign discOutSumLocal = sensorInf. discOutSumLocal;     
+    assign pixCellInf.discOutLocal    = sensorInf.discOutLocal;
+    assign pixCellInf.discOutSumLocal = sensorInf.discOutSum;     
 
     digit_front_end u_digFrontEnd(
-        .SummingMode         (SummingMode    ),
-        .discOutNeighbour    (discOutNear    ),
-        .ackToNeighbour      (ackToNear      ),
-        .discOutLocal        (discOutLocal   ),
-        .ackFromNeighbour    (ackFromNear    ),
-        .discOutSumLocal     (discOutSumLocal),
-        .discOutSumNeighbour (discOutSumNear ),
-        .clk_read            (clk_read       ),
-        .reset               (reset          ),
-        .shutterA            (shutter        ),
-        .shutterB            (shutter        ),
-        .SerInA              (SerInA         ),
-        .SerInB              (SerInB         ),
-        .SerOutA             (SerOutA        ),
-        .SerOutB             (SerOutB        ) 
+        .SummingMode         (pixCellInf.SummingMode    ),
+        .discOutNeighbour    (pixCellInf.discOutNear    ),
+        .ackToNeighbour      (pixCellInf.ackToNear      ),
+        .discOutLocal        (pixCellInf.discOutLocal   ),
+        .ackFromNeighbour    (pixCellInf.ackFromNear    ),
+        .discOutSumLocal     (pixCellInf.discOutSumLocal),
+        .discOutSumNeighbour (pixCellInf.discOutSumNear ),
+        .clk_read            (pixCellInf.clock    ),
+        .reset               (pixCellInf.reset    ),
+        .shutterA            (pixCellInf.shutter  ),
+        .shutterB            (pixCellInf.shutter  ),
+        .SerInA              (pixCellInf.SerIn[0] ),
+        .SerInB              (pixCellInf.SerIn[1] ),
+        .SerOutA             (pixCellInf.SerOut[0]),
+        .SerOutB             (pixCellInf.SerOut[1]) 
     );
-
 endmodule
+
+`ifdef testingPixelCells
+`include "generator.sv"
+`include "pixelCell_inf.sv"
+module  pixelCell_tb ;
+   
+    real            energyS;
+    real            energyE;
+    real            energySE;
+    real            energyL;
+
+    reg             refclk;
+    reg             clock;
+    reg             reset;
+
+    generator       Gen;
+    mailbox         mbx;
+
+    pixelcell_inf    pixelCellInf(clock, reset); 
+
+    pixelcell  u_cell0(
+        .collectEnergyL  (energyL ),
+        .collectEnergyS  (energyS ),
+        .collectEnergyE  (energyE ),
+        .collectEnergySE (energySE),
+        .refclk          (refclk         ),
+        .pixCellInf      (pixelCellInf   ) 
+    );
+    
+    initial begin
+        mbx = new();
+        Gen = new(mbx);     
+        Gen.hitsNumber = 1;   
+        Gen.genData();
+        u_cell0.mbx = mbx;
+    end
+
+    initial begin
+        refclk = 0;
+        forever begin
+            #1 refclk = ~refclk;
+        end
+    end
+
+    initial begin
+        clock = 0;
+        forever begin
+            #10 clock = ~ clock;
+        end
+    end
+
+    initial begin
+        reset = 1'b1;
+        #35;
+        reset = 1'b0;
+    end
+
+    initial begin
+        energyS  = 20;
+        energyE  = 20;
+        energySE = 20;
+        pixelCellInf.discOutNear = '0;
+        pixelCellInf.ackFromNear = '0;
+        pixelCellInf.discOutSumNear = '0;
+        pixelCellInf.SummingMode = '1;
+        pixelCellInf.shutter = '0;
+        pixelCellInf.SerIn   = '0;
+        #300000;
+        $stop();
+    end
+endmodule
+
+`endif 
