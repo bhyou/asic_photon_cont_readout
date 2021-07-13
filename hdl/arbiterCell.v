@@ -22,7 +22,8 @@ module arbiterCell(
    pmos T3 (ack[0], P,   Q);
    nmos T4 (ack[0], 1'b0,Q);
 endmodule
- 
+
+`ifdef testingINV
 module inv_mos(
    input  wire  I,
    output wire ZN
@@ -31,3 +32,4 @@ module inv_mos(
    pmos MOS2 (ZN, 1'b1, I);
 
 endmodule 
+`endif
