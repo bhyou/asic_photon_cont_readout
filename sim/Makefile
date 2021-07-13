@@ -21,7 +21,7 @@ logOpt += -l vcs_run.log
 wavefile = vpd
 ifeq ($(wavefile),vpd)
 	macroOpt += +define+VPD
-	comOpt += -debug_pp
+	comOpt += -debug_access+all
 else
 	comOpt += -fsdb
 endif

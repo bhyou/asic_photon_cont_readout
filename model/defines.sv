@@ -13,4 +13,6 @@
 `define SummingThreshold 20
  
  //`define testingDiscriminator
- `define testingAnalogFrontend
+//`define testingAnalogFrontend
+// `define testingPixelCells
+ `define testingPixelArray

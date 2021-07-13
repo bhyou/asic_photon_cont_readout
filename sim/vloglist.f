@@ -3,4 +3,6 @@
 ../hdl/syncronization.sv
 ../hdl/lsfr_cnt.sv
 ../hdl/digit_front_end.sv
-../bench/digital_front_end_tb.sv
+
+../bench/pixelArray.sv
+//../bench/pixelCell.sv
