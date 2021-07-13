@@ -24,10 +24,10 @@ module pixelArray;
 
     genvar x, y;
     generate
-        for(int y=0; y < Row; y++) begin: YC   // coordinate of y
-        for(int x=0; x < Col; x++) begin: XC   // coordinate of x
+        for(y=0; y < Row; y++) begin: YC   // coordinate of y
+        for(x=0; x < Col; x++) begin: XC   // coordinate of x
             if((x == Col-1) && (y == 0)) begin
-            pixelcell cell_x_y(
+            pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y(
                 .CollectEnergyL  (energy[y][x]),
                 .CollectEnergyS  ( 0.000 ),
                 .CollectEnergyE  ( 0.000 ),
@@ -37,7 +37,7 @@ module pixelArray;
             );
             end
             else if((x != Col-1) && (y == 0)) begin
-            pixelcell cell_x_y(
+            pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y(
                 .CollectEnergyL  (energy[y][x]),
                 .CollectEnergyS  ( 0.000      ),
                 .CollectEnergyE  (energy[y][x+1]),
@@ -47,7 +47,7 @@ module pixelArray;
             );
             end
             else if((x == Col-1) && (y != 0)) begin
-            pixelcell cell_x_y(
+            pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y(
                 .CollectEnergyL  (energy[y][x]),
                 .CollectEnergyS  (energy[y-1][x]),
                 .CollectEnergyE  ( 0.0000 ),
@@ -57,7 +57,7 @@ module pixelArray;
             );
             end
             else begin
-            pixelcell cell_x_yi #(.CoorX(25*x), .CoorY(25*y)) (
+            pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y (
                 .CollectEnergyL  (energy[y][x]    ),
                 .CollectEnergyS  (energy[y-1][x]  ),
                 .CollectEnergyE  (energy[y][x+1]  ),
