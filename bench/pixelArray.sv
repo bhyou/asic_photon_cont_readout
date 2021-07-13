@@ -19,13 +19,13 @@ module pixelArray;
     wire [Col-1:0]      serialOutput ;
 
     real                energy [Row-1:0][Col-1:0];
-    pixelcell_inf   pixCellInf [Row-1:0][Col-1:0];
-    mailbox              mbx   [Row-1:0][Col-1:0];
+    pixelcell_inf       pixInf [Row*Col-1:0];
+    mailbox              mbx   [Row*Col-1:0];
 
     genvar x, y;
     generate
-        for(int y=0; y < Row; y++) begin: YC
-        for(int x=0; x < Col; x++) begin: XC
+        for(int y=0; y < Row; y++) begin: YC   // coordinate of y
+        for(int x=0; x < Col; x++) begin: XC   // coordinate of x
             if((x == Col-1) && (y == 0)) begin
             pixelcell cell_x_y(
                 .CollectEnergyL  (energy[y][x]),
@@ -33,7 +33,7 @@ module pixelArray;
                 .CollectEnergyE  ( 0.000 ),
                 .CollectEnergySE ( 0.000 ),
                 .refclk          (refclk ),
-                .pixCellInf      (pixelCellInf[y][x]) 
+                .pixInf          (pixInf[y*Col+x]) 
             );
             end
             else if((x != Col-1) && (y == 0)) begin
@@ -43,7 +43,7 @@ module pixelArray;
                 .CollectEnergyE  (energy[y][x+1]),
                 .CollectEnergySE ( 0.0000     ),
                 .refclk          (refclk         ),
-                .pixCellInf      (pixelCellInf[y][x]) 
+                .pixInf          (pixInf[y*Col+x]) 
             );
             end
             else if((x == Col-1) && (y != 0)) begin
@@ -53,7 +53,7 @@ module pixelArray;
                 .CollectEnergyE  ( 0.0000 ),
                 .CollectEnergySE ( 0.0000 ),
                 .refclk          (refclk  ),
-                .pixCellInf      (pixelCellInf[y][x]) 
+                .pixInf          (pixInf[y*Col+x]) 
             );
             end
             else begin
@@ -63,7 +63,7 @@ module pixelArray;
                 .CollectEnergyE  (energy[y][x+1]  ),
                 .CollectEnergySE (energy[y-1][x+1]),
                 .refclk          (refclk          ),
-                .pixCellInf      (pixelCellInf[y][x]) 
+                .pixInf          (pixInf[y*Col+x]) 
             );
             end
         end
@@ -75,14 +75,14 @@ module pixelArray;
         for(x=0; x < Col; y++) begin
             for(y=0; y <Row; y++) begin 
                 if(y==0) 
-                    serialOutput[x] = pixelCellInf[y][x].serOut;
+                    serialOutput[x] = pixInf[y*Col+x].serOut;
                 else if(y==Row-1) 
-                    pixelCellInf[y][x].SerIn = serialInput[x];
+                    pixInf[y*Col+x].SerIn = serialInput[x];
                 else 
-                    pixelCellInf[y][x].SerIn = pixelCellInf[y+1][x].SerOut;
+                    pixInf[y*Col+x].SerIn = pixInf[(y+1)*Col+x].SerOut;
 
-                pixelCellInf[y][x].SummingMode = summingMode;
-                pixelCellInf[y][x].shutter = outShutter;
+                pixInf[y*Col+x].SummingMode = summingMode;
+                pixInf[y*Col+x].shutter = outShutter;
             end 
         end
     endgenerate
@@ -93,24 +93,24 @@ module pixelArray;
             for(x=0; x < Col; x++) begin
                 //  get the local discriminator output from southern pixel
                 if(y==0)  
-                    assign pixelCellInf[y][x].discOutNear[0] = 1'b0; 
+                    assign pixInf[y*Col+x].discOutNear[0] = 1'b0; 
                 else  
-                    assign pixelCellInf[y][x].discOutNear[0] = pixelCellInf[y-1][x].discOutLocal; 
+                    assign pixInf[y*Col+x].discOutNear[0] = pixInf[(y-1)*Col+x].discOutLocal; 
                 // get the local discriminator output from southeastern pixel
                 if(y==0 || x==Col-1) 
-                    assign pixelCellInf[y][x].discOutNear[1] = 1'b0;
+                    assign pixInf[y*Col+x].discOutNear[1] = 1'b0;
                 else  
-                    assign pixelCellInf[y][x].discOutNear[1] = pixelCellInf[y-1][x+1].discOutLocal;
+                    assign pixInf[y*Col+x].discOutNear[1] = pixInf[(y-1)*Col+x+1].discOutLocal;
                 // get the local discriminator output from eastern pixel
                 if(x==Col-1)  
-                    assign pixelCellInf[y][x].discOutNear[2] = 1'b0;
+                    assign pixInf[y*Col+x].discOutNear[2] = 1'b0;
                 else          
-                    assign pixelCellInf[y][x].discOutNear[2] = pixelCellInf[y][x+1].discOutLocal;
+                    assign pixInf[y*Col+x].discOutNear[2] = pixInf[y*Col+x+1].discOutLocal;
                 // get the local discriminator output from northeastern pixel
                 if(y==Row-1 || x==Col-1) 
-                    assign pixelCellInf[y][x].discOutNear[3] = 1'b0;
+                    assign pixInf[y*Col+x].discOutNear[3] = 1'b0;
                 else
-                    assign pixelCellInf[y][x].discOutNear[3] = pixelCellInf[y+1][x+1].discOutLocal;
+                    assign pixInf[y*Col+x].discOutNear[3] = pixInf[(y+1)*Col+x+1].discOutLocal;
             end
         end
     endgenerate
@@ -121,24 +121,24 @@ module pixelArray;
             for(x=0; x < Col; x++) begin
                 // acknowledge from northern neighbor pixel
                 if(y==Row-1)  
-                    assign pixelCellInf[y][x].ackFromNear[0] = 1'b0;
+                    assign pixInf[y*Col+x].ackFromNear[0] = 1'b0;
                 else 
-                    assign pixelCellInf[y][x].ackFromNear[0] = pixelCellInf[y+1][x].ackToNear[0];
+                    assign pixInf[y*Col+x].ackFromNear[0] = pixInf[(y+1)*Col+x].ackToNear[0];
                 // acknowledge from northwestern neighbor pixel
                 if(y==Row-1 || x==0)
-                    assign pixelCellInf[y][x].ackFromNear[1] = 1'b0;
+                    assign pixInf[y*Col+x].ackFromNear[1] = 1'b0;
                 else 
-                    assign pixelCellInf[y][x].ackFromNear[1] = pixelCellInf[y+1][x-1].ackToNear[1];
+                    assign pixInf[y*Col+x].ackFromNear[1] = pixInf[(y+1)*Col+x-1].ackToNear[1];
                 // acknowledge from western neighbor pixel
                 if(x==0)  
-                    assign pixelCellInf[y][x].ackFromNear[2] = 1'b0;
+                    assign pixInf[y*Col+x].ackFromNear[2] = 1'b0;
                 else 
-                    assign pixelCellInf[y][x].ackFromNear[2] = pixelCellInf[y][x-1].ackToNear[2];
+                    assign pixInf[y*Col+x].ackFromNear[2] = pixInf[y*Col+x-1].ackToNear[2];
                 // acknowledge from southwest neighbor pixel
                 if(y==0 || x==0)  
-                    assign pixelCellInf[y][x].ackFromNear[3] = 1'b0;
+                    assign pixInf[y*Col+x].ackFromNear[3] = 1'b0;
                 else 
-                    assign pixelCellInf[y][x].ackFromNear[3] = pixelCellInf[y-1][x-1].ackToNear[3];
+                    assign pixInf[y*Col+x].ackFromNear[3] = pixInf[(y-1)*Col+x-1].ackToNear[3];
             end
         end
     endgenerate
@@ -149,19 +149,19 @@ module pixelArray;
             for(x=0; x < Col; x++) begin
                 // get the summing discriminator output from northern pixel
                 if(x==0)  
-                    assign pixelCellInf[y][x].disOutSumNear[2] = 1'b0; 
+                    assign pixInf[y*Col+x].disOutSumNear[2] = 1'b0; 
                 else  
-                    assign pixelCellInf[y][x].disOutSumNear[2] = pixelCellInf[y][x-1].discOutSumLocal;   
+                    assign pixInf[y*Col+x].disOutSumNear[2] = pixInf[y*Col+x-1].discOutSumLocal;   
                 // get the summing discriminator output from northwestern pixel
                 if(x==0 || y==Row-1)  
-                    assign pixelCellInf[y][x].disOutSumNear[1] = 1'b0; 
+                    assign pixInf[y*Col+x].disOutSumNear[1] = 1'b0; 
                 else  
-                    assign pixelCellInf[y][x].disOutSumNear[1] = pixelCellInf[y+1][x-1].discOutSumLocal; 
+                    assign pixInf[y*Col+x].disOutSumNear[1] = pixInf[(y+1)*Col+x-1].discOutSumLocal; 
                 // get the local discriminator output from western pixel
                 if(y==Row-1)  
-                    assign pixelCellInf[y][x].disOutSumNear[0] = 1'b0; 
+                    assign pixInf[y*Col+x].disOutSumNear[0] = 1'b0; 
                 else 
-                    assign pixelCellInf[y][x].disOutSumNear[0] = pixelCellInf[y+1][x].discOutSumLocal;   
+                    assign pixInf[y*Col+x].disOutSumNear[0] = pixInf[(y+1)*Col+x].discOutSumLocal;   
             end
         end
     endgenerate
