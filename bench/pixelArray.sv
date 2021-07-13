@@ -13,14 +13,17 @@ module pixelArray;
     parameter Row = 2;
     parameter Col = 2;
 
-    reg                 simmingMode  ;
+    reg                 summingMode  ;
     reg                 outShutter   ;
     reg  [Col-1:0]      serialInput  ;
     wire [Col-1:0]      serialOutput ;
 
+    reg                 clk, rst;
+    reg                 refclk;
+
     real                energy [Row-1:0][Col-1:0];
-    pixelcell_inf       pixInf [Row*Col-1:0];
-    mailbox              mbx   [Row*Col-1:0];
+    pixelcell_inf       pixInf [Row*Col-1:0] (.clock(clk), .reset(rst));
+    mailbox             mbx   [Row*Col-1:0];
 
     genvar x, y;
     generate
@@ -28,42 +31,42 @@ module pixelArray;
         for(x=0; x < Col; x++) begin: XC   // coordinate of x
             if((x == Col-1) && (y == 0)) begin
             pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y(
-                .CollectEnergyL  (energy[y][x]),
-                .CollectEnergyS  ( 0.000 ),
-                .CollectEnergyE  ( 0.000 ),
-                .CollectEnergySE ( 0.000 ),
+                .collectEnergyL  (energy[y][x]),
+                .collectEnergyS  ( 0.000 ),
+                .collectEnergyE  ( 0.000 ),
+                .collectEnergySE ( 0.000 ),
                 .refclk          (refclk ),
-                .pixInf          (pixInf[y*Col+x]) 
+                .pixCellInf      (pixInf[y*Col+x]) 
             );
             end
             else if((x != Col-1) && (y == 0)) begin
             pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y(
-                .CollectEnergyL  (energy[y][x]),
-                .CollectEnergyS  ( 0.000      ),
-                .CollectEnergyE  (energy[y][x+1]),
-                .CollectEnergySE ( 0.0000     ),
+                .collectEnergyL  (energy[y][x]),
+                .collectEnergyS  ( 0.000      ),
+                .collectEnergyE  (energy[y][x+1]),
+                .collectEnergySE ( 0.0000     ),
                 .refclk          (refclk         ),
-                .pixInf          (pixInf[y*Col+x]) 
+                .pixCellInf      (pixInf[y*Col+x]) 
             );
             end
             else if((x == Col-1) && (y != 0)) begin
             pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y(
-                .CollectEnergyL  (energy[y][x]),
-                .CollectEnergyS  (energy[y-1][x]),
-                .CollectEnergyE  ( 0.0000 ),
-                .CollectEnergySE ( 0.0000 ),
+                .collectEnergyL  (energy[y][x]),
+                .collectEnergyS  (energy[y-1][x]),
+                .collectEnergyE  ( 0.0000 ),
+                .collectEnergySE ( 0.0000 ),
                 .refclk          (refclk  ),
-                .pixInf          (pixInf[y*Col+x]) 
+                .pixCellInf      (pixInf[y*Col+x]) 
             );
             end
             else begin
             pixelcell #(.CoorX(25*x), .CoorY(25*y)) cell_x_y (
-                .CollectEnergyL  (energy[y][x]    ),
-                .CollectEnergyS  (energy[y-1][x]  ),
-                .CollectEnergyE  (energy[y][x+1]  ),
-                .CollectEnergySE (energy[y-1][x+1]),
+                .collectEnergyL  (energy[y][x]    ),
+                .collectEnergyS  (energy[y-1][x]  ),
+                .collectEnergyE  (energy[y][x+1]  ),
+                .collectEnergySE (energy[y-1][x+1]),
                 .refclk          (refclk          ),
-                .pixInf          (pixInf[y*Col+x]) 
+                .pixCellInf      (pixInf[y*Col+x]) 
             );
             end
         end
@@ -72,25 +75,25 @@ module pixelArray;
 
     // lsfr readout connect  
     generate
-        for(x=0; x < Col; y++) begin
-            for(y=0; y <Row; y++) begin 
+        for(x=0; x < Col; x++) begin: lsfrX
+            for(y=0; y <Row; y++) begin : lsfrY
                 if(y==0) 
-                    serialOutput[x] = pixInf[y*Col+x].serOut;
+                    assign serialOutput[x] = pixInf[y*Col+x].SerOut;
                 else if(y==Row-1) 
-                    pixInf[y*Col+x].SerIn = serialInput[x];
+                    assign pixInf[y*Col+x].SerIn = serialInput[x];
                 else 
-                    pixInf[y*Col+x].SerIn = pixInf[(y+1)*Col+x].SerOut;
+                    assign pixInf[y*Col+x].SerIn = pixInf[(y+1)*Col+x].SerOut;
 
-                pixInf[y*Col+x].SummingMode = summingMode;
-                pixInf[y*Col+x].shutter = outShutter;
+                assign pixInf[y*Col+x].SummingMode = summingMode;
+                assign pixInf[y*Col+x].shutter = outShutter;
             end 
         end
     endgenerate
 
     //  connect local discriminator  output to arbiter
     generate
-        for(y=0; y < Row; y++) begin
-            for(x=0; x < Col; x++) begin
+        for(y=0; y < Row; y++) begin: arbiterLinkX
+            for(x=0; x < Col; x++) begin: arbiterLinkY
                 //  get the local discriminator output from southern pixel
                 if(y==0)  
                     assign pixInf[y*Col+x].discOutNear[0] = 1'b0; 
@@ -117,8 +120,8 @@ module pixelArray;
 
     // acknowledge from neighours pixel, such as north,  north-west, west, and south-west
     generate
-        for(y=0; y < Row; y++) begin
-            for(x=0; x < Col; x++) begin
+        for(y=0; y < Row; y++) begin: ackLinkY
+            for(x=0; x < Col; x++) begin: akLinkYX
                 // acknowledge from northern neighbor pixel
                 if(y==Row-1)  
                     assign pixInf[y*Col+x].ackFromNear[0] = 1'b0;
@@ -145,23 +148,23 @@ module pixelArray;
     
     // synchronization logic connect
     generate
-        for(y=0; y < Row; y++) begin
-            for(x=0; x < Col; x++) begin
+        for(y=0; y < Row; y++) begin: syncLinkY
+            for(x=0; x < Col; x++) begin: syncLinkX
                 // get the summing discriminator output from northern pixel
                 if(x==0)  
-                    assign pixInf[y*Col+x].disOutSumNear[2] = 1'b0; 
+                    assign pixInf[y*Col+x].discOutSumNear[2] = 1'b0; 
                 else  
-                    assign pixInf[y*Col+x].disOutSumNear[2] = pixInf[y*Col+x-1].discOutSumLocal;   
+                    assign pixInf[y*Col+x].discOutSumNear[2] = pixInf[y*Col+x-1].discOutSumLocal;   
                 // get the summing discriminator output from northwestern pixel
                 if(x==0 || y==Row-1)  
-                    assign pixInf[y*Col+x].disOutSumNear[1] = 1'b0; 
+                    assign pixInf[y*Col+x].discOutSumNear[1] = 1'b0; 
                 else  
-                    assign pixInf[y*Col+x].disOutSumNear[1] = pixInf[(y+1)*Col+x-1].discOutSumLocal; 
+                    assign pixInf[y*Col+x].discOutSumNear[1] = pixInf[(y+1)*Col+x-1].discOutSumLocal; 
                 // get the local discriminator output from western pixel
                 if(y==Row-1)  
-                    assign pixInf[y*Col+x].disOutSumNear[0] = 1'b0; 
+                    assign pixInf[y*Col+x].discOutSumNear[0] = 1'b0; 
                 else 
-                    assign pixInf[y*Col+x].disOutSumNear[0] = pixInf[(y+1)*Col+x].discOutSumLocal;   
+                    assign pixInf[y*Col+x].discOutSumNear[0] = pixInf[(y+1)*Col+x].discOutSumLocal;   
             end
         end
     endgenerate
