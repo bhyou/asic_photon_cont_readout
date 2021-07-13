@@ -22,7 +22,6 @@
 `endif
 
 class analog_front_end;
-
     sensor             sensor ;
     discriminator      disc;
 
@@ -31,15 +30,13 @@ class analog_front_end;
         disc = new(sensorInf);
     endfunction //new()
 
-    task automatic hit_reaction(real voltageS, voltageE, voltageSE, ref real localVoltage);
+    task automatic hit_reaction(real voltageS, voltageE, voltageSE, real localVoltage);
         sensor.convert_energy_to_voltage(localVoltage);
         fork
             disc.local_compare(localVoltage);
             disc.summing_compare(localVoltage,voltageS, voltageE,voltageSE);
         join
-
     endtask // 
-
 endclass //analog_front_end
 
 `ifdef testingAnalogFrontend
