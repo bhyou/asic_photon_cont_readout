@@ -15,9 +15,9 @@
 //--------------------------------------------------------------
 `include "discriminator.sv"
 `include "sensor.sv"
+`include "defines.sv"
 
 `ifdef testingAnalogFrontend
-    `include "defines.sv"
     `include "generator.sv"
 `endif
 
@@ -30,8 +30,11 @@ class analog_front_end;
         disc = new(sensorInf);
     endfunction //new()
 
-    task automatic hit_reaction(real voltageS, voltageE, voltageSE, real localVoltage);
-        sensor.convert_energy_to_voltage(localVoltage);
+    task automatic get_local_voltage(ref real voltage);
+        sensor.convert_energy_to_voltage(voltage);
+    endtask
+
+    task automatic hit_reaction(real voltageS, voltageE, voltageSE, localVoltage);
         fork
             disc.local_compare(localVoltage);
             disc.summing_compare(localVoltage,voltageS, voltageE,voltageSE);
