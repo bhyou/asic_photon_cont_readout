@@ -15,4 +15,5 @@
  //`define testingDiscriminator
 //`define testingAnalogFrontend
 // `define testingPixelCells
- `define testingPixelArray
+// `define testingPixelArray
+ `define testingChannel
