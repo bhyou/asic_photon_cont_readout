@@ -1,5 +1,12 @@
 # digital readout of a photon counting chip
-The photon counting chip became only possible through the availability and maturity of certain technologies and experience gained in high energy physics experiments and related fields. 
+The photon counting chip became only possible through the availability and maturity of certain technologies and experience gained in high energy physics experiments and related fields.
+
+
+## the architecture of modeling MediPix3
+the analog part including discriminator and sensor is described by systemverilog.
+
+the model structure of the chip is shown in the following figure:
+![image](image/model_architecture.png)
 
 # Reference
 
