@@ -77,15 +77,16 @@ class sensor;
       end
 
       if(`DEBUG_MEDIUM) begin
-         $display("@%0t the distance from hit position to current pixel is %f", $time, hit2pixDist);
-         $display("@%0t the radius of energy deposition is %f", $time, radiusED);
-         $display("@%0t the angle of colected energy is %f", $time, angleCC);
-         $display("@%0t the angle of deposition energy is %f", $time, angleED);
-         $display("@%0t the area of colected energy is %f", $time, fanAreaCC);
-         $display("@%0t the area of deposition energy is %f", $time, fanAreaED);
-         $display("@%0t the area of Quadrilateral is %f", $time, quadArea);
-         $display("@%0t collected energy is %f", $time, result);
-         $display("-------------------------------------------------\n");
+         $display("@%0t the current point is (%0d, %0d)",$realtime,localCoorX, localCoorY);
+         $display("@%0t the distance from hit position to current pixel is %f", $realtime, hit2pixDist);
+         $display("@%0t the radius of energy deposition is %f", $realtime, radiusED);
+         $display("@%0t the angle of colected energy is %f", $realtime, angleCC);
+         $display("@%0t the angle of deposition energy is %f", $realtime, angleED);
+         $display("@%0t the area of colected energy is %f", $realtime, fanAreaCC);
+         $display("@%0t the area of deposition energy is %f", $realtime, fanAreaED);
+         $display("@%0t the area of Quadrilateral is %f", $realtime, quadArea);
+         $display("@%0t collected energy is %f", $realtime, result);
+         $display("-----------------------------------\n");
       end
    endtask
 
@@ -125,6 +126,10 @@ program testcase();
    mailbox    mbx;
    event      done;
    real       energy;
+
+   initial begin
+      $realtimeformat(-9, 5, "ns", 10);
+   end
 
    initial begin
       mbx     = new();
