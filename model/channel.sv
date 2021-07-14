@@ -8,7 +8,6 @@
     receive a photon event and then transfer it to all pixel in the array
  ************************************************************************/
 `include "defines.sv"
-`include "photon.sv"
 class channel #(int Row=2, Col=2);
 
     mailbox     receiveMbx;
@@ -17,6 +16,7 @@ class channel #(int Row=2, Col=2);
     function new(mailbox in_mbx, mailbox out_mbx[Row*Col-1:0]);
         this.receiveMbx = in_mbx;
         this.transmitMbx = out_mbx;
+        $display("[info] @channel the size of array : %0d x %0d", Row, Col);
     endfunction
 
     task transfer();
@@ -30,6 +30,7 @@ endclass
 
 `ifdef testingChannel
 `include "generator.sv"
+`include "photon.sv"
 
 program testcase;
     parameter       Col = 2;

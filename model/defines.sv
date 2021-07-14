@@ -10,10 +10,11 @@
 `define DEBUG_MEDIUM
 `define CollectRadius 25
 `define LocalThreshold 5
-`define SummingThreshold 20
+`define SummingThreshold 15
  
  //`define testingDiscriminator
 //`define testingAnalogFrontend
 // `define testingPixelCells
 // `define testingPixelArray
- `define testingChannel
+// `define testingChannel
+`define testAnalogFrontEnd

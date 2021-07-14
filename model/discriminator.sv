@@ -28,6 +28,7 @@ class discriminator;
     endfunction //new()
 
     task automatic local_compare(real localVoltage);
+        $display("@%0t the local voltage : %0d",$time, localVoltage);
         if(localVoltage > `LocalThreshold) begin
             sensorInf.discOutLocal = 1'b0;
             repeat(50-localVoltage/2) 
@@ -47,9 +48,10 @@ class discriminator;
 
     task automatic summing_compare(real voltageL, voltageS, voltageE, voltageSE);
         real summingVoltage = voltageL + voltageS + voltageSE + voltageE;
+        $display("@%0t the summing voltage : %0d",$time, summingVoltage);
         if(summingVoltage > `SummingThreshold) begin
             sensorInf.discOutSum = 1'b0;
-            repeat(100-summingVoltage/2) 
+            repeat(50-summingVoltage/2) 
             @(sensorInf.clock);
 
             sensorInf.discOutSum = 1'b1;
@@ -57,7 +59,7 @@ class discriminator;
             @(sensorInf.clock);
 
             sensorInf.discOutSum = 1'b0;
-            repeat(100-summingVoltage/2) 
+            repeat(50-summingVoltage/2) 
             @(sensorInf.clock);
         end
         else
