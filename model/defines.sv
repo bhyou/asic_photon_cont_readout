@@ -17,4 +17,6 @@
 // `define testingPixelCells
 // `define testingPixelArray
 // `define testingChannel
-`define testAnalogFrontEnd
+//`define testAnalogFrontEnd
+//`define testingAnalogFrontendArray
+ `define testAnalogEnvironment

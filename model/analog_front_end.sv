@@ -17,10 +17,6 @@
 `include "sensor.sv"
 `include "defines.sv"
 
-`ifdef testingAnalogFrontend
-    `include "generator.sv"
-`endif
-
 class analog_front_end;
     sensor             sensor ;
     discriminator      disc;
@@ -43,6 +39,8 @@ class analog_front_end;
 endclass //analog_front_end
 
 `ifdef testingAnalogFrontend
+
+`include "generator.sv"
 module testcase;
     reg    clock;
     wire   discOutLocal;

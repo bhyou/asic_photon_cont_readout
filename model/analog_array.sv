@@ -5,8 +5,7 @@
  > Mail        : bhyou@foxmail.com 
  > Created Time: Wed 14 Jul 2021 10:33:40 AM CST
  ************************************************************************/
-`define testAnalogFrontEnd
-
+`include "defines.sv"
 `include "analog_front_end.sv"
 class  analogFrontEndArray #(int Row=3, Col=3);
     
@@ -49,7 +48,7 @@ class  analogFrontEndArray #(int Row=3, Col=3);
 endclass //
 
 
-`ifdef testAnalogFrontEnd;
+`ifdef testAnalogFrontEndArray;
 `include "generator.sv"
 `include "channel.sv"
 
@@ -57,9 +56,9 @@ module testcase;
     parameter Row = 3;
     parameter Col = 3;
 
-    analogFrontEndArray #(.Row(3),.Col(3)) feArray;
-    generator                              gen    ;
-    channel #(.Row(3),.Col(3))             dch    ;
+    analogFrontEndArray #(.Row(Row),.Col(Col)) feArray;
+    generator                                   gen    ;
+    channel #(.Row(Row),.Col(Col))              dch    ;
 
     mailbox             gen2ch;
     mailbox             ch2array [Row*Col-1:0];
