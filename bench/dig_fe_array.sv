@@ -5,7 +5,8 @@
  > Mail        : bhyou@foxmail.com 
  > Created Time: Wed 14 Jul 2021 10:19:24 PM CST
  ************************************************************************/
- 
+`include "defines.sv"
+`include "sensor_inf.sv"
 module dig_fe_array #(
     parameter Row = 2, 
     parameter Col = 2) (
@@ -15,18 +16,18 @@ module dig_fe_array #(
     input  wire           shutter,
     input  wire [Col-1:0] SerInA,
     input  wire [Col-1:0] SerInB,
-    input  wire [Col-1:0] SerOutA,
-    input  wire [Col-1:0] SerOutB,
+    output wire [Col-1:0] SerOutA,
+    output wire [Col-1:0] SerOutB,
     // discriminator out
     sensor_inf  sensorInf [Row*Col-1:0]
 );
 
-    wire [3:0] [Col-1:0]  discOutNear [Row-1:0];
-    wire [3:0] [Col-1:0]  ackToNear   [Row-1:0];
-    wire       [Col-1:0]  discOutSelf [Row-1:0];
-    wire [3:0] [Col-1:0]  ackFromNear [Row-1:0];
-    wire       [Col-1:0]  discOutSum  [Row-1:0];
-    wire [2:0] [Col-1:0]  discSumMear [Row-1:0];
+    wire [3:0]   discOutNear [Row-1:0][Col-1:0];
+    wire [3:0]   ackToNear   [Row-1:0][Col-1:0];
+    wire         discOutSelf [Row-1:0][Col-1:0];
+    wire [3:0]   ackFromNear [Row-1:0][Col-1:0];
+    wire         discOutSum  [Row-1:0][Col-1:0];
+    wire [2:0]   discSumNear [Row-1:0][Col-1:0];
 
     wire [Col-1:0]  serialInA   [Row-1:0];
     wire [Col-1:0]  serialInB   [Row-1:0];
@@ -43,18 +44,21 @@ module dig_fe_array #(
                    .discOutLocal        (discOutSelf[y][x]),
                    .ackFromNeighbour    (ackFromNear[y][x]),
                    .discOutSumLocal     (discOutSum[y][x] ),
-                   .discOutSumNeighbour (discSumMear[y][x]),
+                   .discOutSumNeighbour (discSumNear[y][x]),
 
                    .clk_read       (readClk ),
                     .SummingMode   (sumMode ),
                    .reset          (reset   ),
                    .shutterA       (shutter ),
                    .shutterB       (shutter ),
-                   .SerInA         (serialInA[y]][x] ),
-                   .SerInB         (serialInB[y]][x] ),
+                   .SerInA         (serialInA[y][x] ),
+                   .SerInB         (serialInB[y][x] ),
                    .SerOutA        (serialOutA[y][x] ),
                    .SerOutB        (serialOutB[y][x] )
                 );
+
+                assign discOutSelf[y][x] = sensorInf[y*Col+x].discOutLocal;
+                assign discOutSum[y][x]  = sensorInf[y*Col+x].discOutSum;
             end
         end
     endgenerate
@@ -112,25 +116,25 @@ module dig_fe_array #(
             for(x=0; x < Col; x++) begin
                 // acknowledge from northern neighbor pixel
                 if(y==Row-1)  
-                    assign ackFromNear[y][x][0] = 1'b0;
+                    assign ackFromNear[y][x][0] = 1'b1;
                 else 
                     assign ackFromNear[y][x][0] = ackToNear[y+1][x][0];
 
                 // acknowledge from northwestern neighbor pixel
                 if(y==Row-1 || x==0)
-                    assign ackFromNear[y][x][1] = 1'b0;
+                    assign ackFromNear[y][x][1] = 1'b1;
                 else 
                     assign ackFromNear[y][x][1] = ackToNear[y+1][x-1][1];
 
                 // acknowledge from western neighbor pixel
                 if(x==0)  
-                    assign ackFromNear[y][x][2] = 1'b0;
+                    assign ackFromNear[y][x][2] = 1'b1;
                 else 
                     assign ackFromNear[y][x][2] = ackToNear[y][x-1][2];
 
                 // acknowledge from southwest neighbor pixel
                 if(y==0 || x==0)  
-                    assign ackFromNear[y][x][3] = 1'b0;
+                    assign ackFromNear[y][x][3] = 1'b1;
                 else 
                     assign ackFromNear[y][x][3] = ackToNear[y-1][x-1][3];
             end
@@ -142,10 +146,10 @@ module dig_fe_array #(
         for(y=0; y < Row; y++) begin: syncLinkY
             for(x=0; x < Col; x++) begin: syncLinkX
                 // get the summing discriminator output from northern pixel
-                if(x==0)  
-                    assign discSumNear[y][x][2] = 1'b0; 
+                if(y==Row-1)  
+                    assign discSumNear[y][x][0] = 1'b0; 
                 else  
-                    assign discSumNear[y][x][2] = discOutSum[y+1][x];
+                    assign discSumNear[y][x][0] = discOutSum[y+1][x];
 
                 // get the summing discriminator output from northwestern pixel
                 if(x==0 || y==Row-1)  
@@ -153,12 +157,110 @@ module dig_fe_array #(
                 else  
                     assign discSumNear[y][x][1] = discOutSum[y+1][x-1]; 
 
-                // get the local discriminator output from western pixel
-                if(y==Row-1)  
-                    assign discSumNear[y][x][0] = 1'b0; 
+                // get the summing discriminator output from western pixel
+                if(x==0)  
+                    assign discSumNear[y][x][2] = 1'b0; 
                 else 
-                    assign discSumNear[y][x][0] = discOutSum[y][x-1]; 
+                    assign discSumNear[y][x][2] = discOutSum[y][x-1]; 
             end
         end
     endgenerate
 endmodule
+
+
+`ifdef verifyDigFrontEndArray
+module digitFrontEnd_tb;
+    parameter Row = 2;
+    parameter Col = 2;
+
+    reg            readClk;
+    reg            reset  ;
+    reg            sumMode;
+    reg            shutter;
+    reg  [Col-1:0] SerInA ;
+    reg  [Col-1:0] SerInB ;
+    wire [Col-1:0] SerOutA;
+    wire [Col-1:0] SerOutB;
+
+    reg            clock;
+    sensor_inf  sensorInf [Row*Col-1:0](clock);
+
+    dig_fe_array #(2,2) u_digArray(
+        .readClk  (readClk  ),
+        .reset    (reset    ),
+        .sumMode  (sumMode  ),
+        .shutter  (shutter  ),
+        .SerInA   (SerInA   ),
+        .SerInB   (SerInB   ),
+        .SerOutA  (SerOutA  ),
+        .SerOutB  (SerOutB  ),
+        .sensorInf(sensorInf) 
+    );
+
+    initial begin
+        readClk = 1'b0;
+        forever begin
+            #20  readClk = ~readClk;
+        end
+    end
+
+    initial begin
+        clock = 0;
+        forever begin
+            #1 clock = ~clock;
+        end
+    end
+
+    initial begin
+        reset   = 1'b1;
+        sumMode = 1'b1;
+        shutter = 1'b0;
+        SerInA  = '0;
+        SerInB  = '0;
+
+        #10 ;
+        reset = 1'b0;
+    end
+
+    initial begin
+        for(int item =0 ; item < Row*Col; item++) begin
+            set_local_discriminate(item,1'b0) ;
+            set_summing_discriminate(item,1'b0);
+        end
+
+        fork
+            sensorInf[0].local_discriminate(4);
+            sensorInf[0].summing_discriminate(12);
+
+            sensorInf[1].local_discriminate(8);
+            sensorInf[1].summing_discriminate(8);
+
+            sensorInf[2].local_discriminate(12);
+            sensorInf[2].summing_discriminate(40);
+
+            sensorInf[3].local_discriminate(16);
+            sensorInf[3].summing_discriminate(24);
+        join
+        #200;
+    end
+
+    task set_local_discriminate(int index,bit bitVal);
+        case(index)
+            0: sensorInf[0].discOutLocal = bitVal;
+            1: sensorInf[1].discOutLocal = bitVal;
+            2: sensorInf[2].discOutLocal = bitVal;
+            3: sensorInf[3].discOutLocal = bitVal;
+        endcase
+    endtask
+
+    task set_summing_discriminate(int index, bit bitVal);
+        case(index)
+            0: sensorInf[0].discOutSum = bitVal;
+            1: sensorInf[1].discOutSum = bitVal;
+            2: sensorInf[2].discOutSum = bitVal;
+            3: sensorInf[3].discOutSum = bitVal;
+        endcase
+    endtask
+endmodule
+
+`endif

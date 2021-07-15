@@ -19,4 +19,7 @@
 // `define testingChannel
 //`define testAnalogFrontEnd
 //`define testingAnalogFrontendArray
- `define testAnalogEnvironment
+//`define testAnalogEnvironment
+
+ `define verifyDigFrontEndArray
+
