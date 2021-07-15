@@ -228,7 +228,7 @@ module digitFrontEnd_tb;
             set_summing_discriminate(item,1'b0);
         end
 
-        fork
+        fork            
             sensorInf[0].local_discriminate(4);
             sensorInf[0].summing_discriminate(12);
 
@@ -240,6 +240,21 @@ module digitFrontEnd_tb;
 
             sensorInf[3].local_discriminate(16);
             sensorInf[3].summing_discriminate(24);
+        join
+
+        fork
+            sensorInf[0].local_discriminate(10);
+            sensorInf[0].summing_discriminate(20);
+
+            sensorInf[1].local_discriminate(10);
+            sensorInf[1].summing_discriminate(10);
+
+            sensorInf[2].local_discriminate(10);
+            sensorInf[2].summing_discriminate(40);
+
+            sensorInf[3].local_discriminate(10);
+            sensorInf[3].summing_discriminate(20);
+
         join
         #200;
     end
