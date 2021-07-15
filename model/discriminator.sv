@@ -14,10 +14,7 @@
 //   based on the collected energy or charge.
 // ----------------------------------------------------------------
 `include "defines.sv"
-interface sensor_inf ( input bit clock);
-    logic discOutLocal;
-    logic discOutSum;
-endinterface //sensor_inf
+`include "sensor_inf.sv"
 
 class discriminator;
 
