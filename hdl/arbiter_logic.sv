@@ -21,5 +21,6 @@ module arbiter_logic(
    arbiterCell compareWithBot   ( .req({discOutLocal,discOutNeighbour[2]}),  .ack({ackForLocal[2],ackToNeighbour[2]}));
    arbiterCell compareWithBL    ( .req({discOutLocal,discOutNeighbour[3]}),  .ack({ackForLocal[3],ackToNeighbour[3]}));
 
-   assign winerAll = arbiterEnable ? ((&ackFromNeighbour) & (~|ackToNeighbour)) : discOutLocal; 
+   //assign winerAll = arbiterEnable ? ((&ackFromNeighbour) & (~|ackToNeighbour)) : discOutLocal; 
+   assign winerAll = arbiterEnable ? ((&ackFromNeighbour) & (&ackForLocal)) : discOutLocal; 
 endmodule 

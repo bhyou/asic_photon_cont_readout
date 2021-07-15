@@ -13,7 +13,7 @@ module syncronization(
    output wire          sumPulse
 );
 
-   wire   overThreshold = discOutSumLocal & (&discOutSumNeighbour);
+   wire   overThreshold = discOutSumLocal | (|discOutSumNeighbour);
    assign sumPulse = sync_enable ? (winerAll & overThreshold) : discOutSumLocal; 
 
 endmodule 
